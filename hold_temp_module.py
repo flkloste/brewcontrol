@@ -178,7 +178,7 @@ class HoldTemp(threading.Thread):
     # attach entry to list whereby list is automatically shortened when exceeding size 1000
     def attachToCsvEntryList(self, entry):
         self.iterationCount = self.iterationCount + 1
-        if len(self.csvEntries) < 1000:
+        if len(self.csvEntries) < 4000:
             if self.iterationCount % self.skipCount == 0:
                 self.csvEntries.append(entry)
         else:
