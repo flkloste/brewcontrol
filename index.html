@@ -1,138 +1,186 @@
 <head>
-  <!-- Plotly.js -->
-   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
-
 <body>
-  <div id="myDiv" style="width: 800px; height: 600px;"><!-- Plotly chart will be drawn inside this DIV --></div>
-  
-  <font face="arial" size = "14">
-  
-	Soll-Temperature
-	<input id="soll_temp" type="text" name="soll_temp" maxlength="2" size="5">
-	<input id="settemp" type="button" value="Set Temp" /> <br> <br>
-	Ist-Temperatur <span class="jsValueIstTemp">NaN</span> <br> <br>
-	<input id="start_control" type="button" value="Start" />
-	<input id="stop_control" type="button" value="Stop" />
-	<input id="neu" type="button" value="Neu..." />
-
-	</font>
-  <script>
+    <div id="myDiv" style="width: 800px; height: 600px;">
+        <!-- Plotly chart will be drawn inside this DIV -->
+    </div>
+    <font face="helvetica">
+        <table>
+            <tbody>
+                <tr>
+                    <td align="right">Ist-Temperatur</td>
+                    <td> </td>
+                    <td align="right"> <strong style="font-size: 35px;"> <span class="jsValueIstTemp">-</span> °C </strong></td>
+                </tr>
+                <tr> </tr>
+                <tr> </tr>
+                <tr>
+                    <td align="right">Soll-Temperatur</td>
+                    <td> </td>
+                    <td align="right"> <span class="jsValueSollTemp">-</span> °C</td>
+                </tr>
+                <tr>
+                    <td align="right">Power</td>
+                    <td> </td>
+                    <td align="right"> <span class="jsValueStrom">-</span></td>
+                </tr>
+                <tr>
+                    <td align="right">Status</td>
+                    <td> </td>
+                    <td align="right"> <span class="jsValueStatus">-</span></td>
+                </tr>
+                <tr>
+                    <td align="right">Modus</td>
+                    <td> </td>
+                    <td align="right"> <span class="jsValueModus">-</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <input id="soll_temp" type="number" name="soll_temp" pattern="\d*" maxlength="2">
+        <input id="settemp" type="button" value="Set Temp" /> <br> <br>
+        <input id="start_control" type="button" value="Start" />
+        <input id="stop_control" type="button" value="Stop" /> <br> <br> <br> <br>
+		<select id="selectHeatOrCool">
+			<option value="h">Heizen</option>
+			<option value="f">Kühlen</option>
+		</select> 
+        <input id="neu" type="button" value="Neu..." />
+    </font>
+    <script>
+        function makeplot() {
+            Plotly.d3.csv("test.csv", function(data){ processData(data) } );
+        
+        };
+            
+        function processData(allRows) {
+        
+            console.log(allRows);
+            var date = [], ist = [], soll = [];
+        
+            for (var i=0; i<allRows.length; i++) {
+        	
+        	row = allRows[i];
+        	date.push( row['Zeit'] );
+        	ist.push( row['Ist'] );
+        	soll.push( row['Soll'] );
+            }
+            makePlotly( date, ist, soll );
+        }
+        
+        function makePlotly( x, y, z ){
+            var plotDiv = document.getElementById("plot");
+        	
+        	var layout = {
+        		xaxis: {
+        			type: 'date'		
+        		}
+        	};
+        	
+        	var trace0 = {
+        	  x: x,
+        	  y: y,
+        	  name: 'Ist',
+        	  type: 'scatter'
+        	};
+        	var trace1 = {
+        	  x: x,
+        	  y: z,
+        	  name: 'Soll',
+        	  type: 'scatter'
+        	};
+        	
+        	var traces = [trace0, trace1];
+        
+            Plotly.newPlot('myDiv', traces, layout);
+        };
+        
+        function updateTemperature() {
+        	var $jsValueIst = document.querySelector('.jsValueIstTemp');
+        	var $jsValueSoll = document.querySelector('.jsValueSollTemp');
+        	var $jsValueStrom = document.querySelector('.jsValueStrom');
+        	var $jsValueStatus = document.querySelector('.jsValueStatus');
+        	var $jsValueModus = document.querySelector('.jsValueModus');
+        	
+        	var jqXHR = $.ajax({
+        		type: "POST",
+        		url: "get_info",
+        		async: true,
+        		dataType: "json",
+        		data: { },
+        		success: function (json) {
+        			$jsValueIst.innerHTML = json.ist;
+        			$jsValueSoll.innerHTML = json.soll;
+        			$jsValueStrom.innerHTML = json.power;
+        			$jsValueStatus.innerHTML = json.running;
+        			$jsValueModus.innerHTML = json.mode;
+					
+					if ($jsValueStatus.innerHTML == 'aktiv')
+					{
+						document.getElementById("start_control").disabled = true;
+						document.getElementById("stop_control").disabled = false; 
+						document.getElementById("neu").disabled = true; 
+					}
+					else
+					{
+						document.getElementById("stop_control").disabled = true; 
+						document.getElementById("start_control").disabled = false; 
+						document.getElementById("neu").disabled = false;
+					}
+        		}
+        	});
+        	
+        	
+        }
+           
+        makeplot();
+        setInterval(makeplot, 5000);
+        setInterval(updateTemperature, 1000);
+         
+    </script>
 	
-	function makeplot() {
-	    Plotly.d3.csv("test.csv", function(data){ processData(data) } );
-
-	};
-	    
-	function processData(allRows) {
-
-	    console.log(allRows);
-	    var date = [], ist = [], soll = [];
-
-	    for (var i=0; i<allRows.length; i++) {
-		
-		row = allRows[i];
-		date.push( row['Zeit'] );
-		ist.push( row['Ist'] );
-		soll.push( row['Soll'] );
-	    }
-	    makePlotly( date, ist, soll );
-	}
-
-	function makePlotly( x, y, z ){
-	    var plotDiv = document.getElementById("plot");
-		
-		var layout = {
-			xaxis: {
-				type: 'date'		
-			}
-		};
-		
-		var trace0 = {
-		  x: x,
-		  y: y,
-		  name: 'Ist',
-		  type: 'scatter'
-		};
-		var trace1 = {
-		  x: x,
-		  y: z,
-		  name: 'Soll',
-		  type: 'scatter'
-		};
-		
-		var traces = [trace0, trace1];
-
-	    Plotly.newPlot('myDiv', traces, layout);
-	};
-	
-	function updateTemperature() {
-		var $jsValueIst = document.querySelector('.jsValueIstTemp');
-		
-		var jqXHR = $.ajax({
-			type: "POST",
-			url: "get_info",
-			async: true,
-			dataType: "json",
-			data: { },
-			success: function (json) {
-				var x = json.ist;
-				$jsValueIst.innerHTML = x;
-			}
-		});
-		
-		
-	}
-    
-	makeplot();
-	setInterval(makeplot, 5000);
-	setInterval(updateTemperature, 1000);
-  </script>
-
-
-
-<script src="http://code.jquery.com/jquery-latest.min.js" type="text/javascript"></script>
-<script>
-
-    $(document).ready(function() {
-	    $("#settemp").click(function(){
-	        var soll_temp_value = document.getElementById('soll_temp').value;
-      		var jqXHR = $.ajax({
-	  	        type: "POST",
-	     		url: "set_temp",
-	        	async: true,
-            	data: { mydata: soll_temp_value }
-        	});
-   	    }); 
-		$("#neu").click(function(){
-      		var jqXHR = $.ajax({
-	  	        type: "POST",
-	     		url: "neu",
-	        	async: true,
-            	data: { }
-        	});
-   	    }); 
-		$("#start_control").click(function(){
-      		var jqXHR = $.ajax({
-	  	        type: "POST",
-	     		url: "start",
-	        	async: true,
-           		data: { }
-        	});
-   	    });
-		$("#stop_control").click(function(){
-      		var jqXHR = $.ajax({
-	  	        type: "POST",
-	     		url: "stop",
-	        	async: true,
-            	data: { }
-        	});
-   	    }); 		
-    });
-</script>
-
-
-
-
+    <script src="http://code.jquery.com/jquery-latest.min.js" type="text/javascript"></script>
+    <script>
+        $(document).ready(function() {
+         $("#settemp").click(function(){
+             var soll_temp_value = document.getElementById('soll_temp').value;
+          		var jqXHR = $.ajax({
+                type: "POST",
+          		url: "set_temp",
+             	async: true,
+                	data: { mydata: soll_temp_value }
+            	});
+            }); 
+					
+        $("#neu").click(function(){
+			
+				var e = document.getElementById("selectHeatOrCool");
+				var selected_mode = e.options[e.selectedIndex].value;
+			
+          		var jqXHR = $.ajax({
+                type: "POST",
+          		url: "neu",
+             	async: true,
+                	data: { mode: selected_mode }
+            	});
+            }); 
+        $("#start_control").click(function(){
+          		var jqXHR = $.ajax({
+                type: "POST",
+          		url: "start",
+             	async: true,
+               		data: { }
+            	});
+            });
+        $("#stop_control").click(function(){
+          		var jqXHR = $.ajax({
+                type: "POST",
+          		url: "stop",
+             	async: true,
+                	data: { }
+            	});
+            }); 		
+        });
+    </script>
 </body>
-
