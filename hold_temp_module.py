@@ -18,7 +18,7 @@ class InfoStats:
         self.power_status = in_power_status
 
 class HoldTemp(threading.Thread):
-    def __init__(self, in_mode, in_soll_temp, in_is_running):
+    def __init__(self, in_mode, in_soll_temp, in_is_running, in_csv_lock):
         threading.Thread.__init__(self)
         
         basepath = os.path.dirname(__file__)
@@ -32,7 +32,7 @@ class HoldTemp(threading.Thread):
         self.skipCount = 1
         self.csvEntries = list()
         self.lastValues = list()
-        call(['pilight-control', '-d', 'HiFi', '-s', 'off'])
+        call(['pilight-control', '-d', 'HiFi', '-s', 'off', '-S=127.0.0.1', '-P', '5002'])
 
         self.pilight_cmd_ON = ''
         self.pilight_cmd_OFF = ''
@@ -58,11 +58,13 @@ class HoldTemp(threading.Thread):
         self.ist_temp_lock = threading.Lock()
         self.is_running = in_is_running
         self.is_running_lock = threading.Lock()
+        self.csv_lock = in_csv_lock
         self._stop = threading.Event()
 
-        with open("test.csv", "w") as csvFile:
-            csvFile.truncate()
-            csvFile.write("Zeit,Ist,Soll\n")
+        with self.csv_lock:
+            with open("test.csv", "w") as csvFile:
+                csvFile.truncate()
+                csvFile.write("Zeit,Ist,Soll\n")
 
     # make thread stoppable
     def stop(self):
@@ -106,7 +108,7 @@ class HoldTemp(threading.Thread):
             self.is_running = 1
 
     def stopControl(self):
-        call(['pilight-control', '-d', 'HiFi', '-s', 'off'])
+        call(['pilight-control', '-d', 'HiFi', '-s', 'off', '-S=127.0.0.1', '-P', '5002'])
         with self.is_running_lock:
             self.is_running = 0
 
@@ -128,10 +130,17 @@ class HoldTemp(threading.Thread):
         return value
 
     def getTemp(self):
-        result = self.read_sensor()
-        while(result == 85.0):
+        result = 0
+        try:
             result = self.read_sensor()
+            while(result == 85.0):
+                result = self.read_sensor()
+                time.sleep(1)
+        except:
+            # try again
             time.sleep(1)
+            return self.getTemp()
+            
         self.storeValue(result)
         # temp_des;temp_akt;isHeating
         # self.ist_temp_queue.put("%s;%s;%s"%(self.temp_des, result, self.isHeating))
@@ -140,7 +149,8 @@ class HoldTemp(threading.Thread):
 
     def storeValue(self, value):
         #speicher nur neue Werte
-        if value not in self.lastValues: # achtung eigentlich nur letzen wert ueberpruefen
+        # if value not in self.lastValues: # achtung eigentlich nur letzen wert ueberpruefen
+        if len(self.lastValues) == 0 or value != self.lastValues[-1]:
             if len(self.lastValues) > 2:
                 self.lastValues.pop(0)
             self.lastValues.append(value)
@@ -160,7 +170,7 @@ class HoldTemp(threading.Thread):
     def startHeating(self):
         if(self.getIsRunning() == 1):
             #if(self.power_status == 0):
-            call(['pilight-control', '-d', 'HiFi', '-s', self.pilight_cmd_ON])
+            call(['pilight-control', '-d', 'HiFi', '-s', self.pilight_cmd_ON, '-S=127.0.0.1', '-P', '5002'])
             if(self.mode == MODE.HEATING):
                 self.power_status = 1
             else:
@@ -169,7 +179,7 @@ class HoldTemp(threading.Thread):
     def stopHeating(self):
         if(self.getIsRunning() == 1):
             #if(self.power_status == 1):
-            call(['pilight-control', '-d', 'HiFi', '-s', self.pilight_cmd_OFF])
+            call(['pilight-control', '-d', 'HiFi', '-s', self.pilight_cmd_OFF, '-S=127.0.0.1', '-P', '5002'])
             if(self.mode == MODE.HEATING):
                 self.power_status = 0
             else:
@@ -187,12 +197,13 @@ class HoldTemp(threading.Thread):
 
 
     def writeCsv(self):
-        print self.csvFilePath
-        with open(self.csvFilePath, "w") as csvFile:
-            csvFile.truncate()
-            csvFile.write("Zeit,Ist,Soll\n")
-            for line in self.csvEntries:
-                csvFile.write(line)
+        #print self.csvFilePath
+        with self.csv_lock:
+            with open(self.csvFilePath, "w") as csvFile:
+                csvFile.truncate()
+                csvFile.write("Zeit,Ist,Soll\n")
+                for line in self.csvEntries:
+                    csvFile.write(line)
 
 
     # main routine
@@ -242,11 +253,11 @@ class HoldTemp(threading.Thread):
                     self.attachToCsvEntryList(csvEntry)
                     self.writeCsv()
 
-                    print 'aktuelle temp: %s; gewuenschte temp: %s, heizt: %s' % (istTemp, sollTemp, self.power_status)
+                    #print 'aktuelle temp: %s; gewuenschte temp: %s, heizt: %s' % (istTemp, sollTemp, self.power_status)
 
         except:
             print 'Good-bye'
-            print 'aktuelle temp: %s; gewuenschte temp: %s, heizt: %s' % (istTemp, sollTemp, self.power_status)
+            #print 'aktuelle temp: %s; gewuenschte temp: %s, heizt: %s' % (istTemp, sollTemp, self.power_status)
             print sys.exc_info()
             self.stopControl()
 

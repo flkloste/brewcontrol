@@ -6,10 +6,11 @@ import threading
 
 class Handler:
     def __init__(self):
-        self.ht = htmod.HoldTemp(htmod.MODE.HEATING, 20, 0)
+        self.csvLock = threading.Lock()
+        self.ht = htmod.HoldTemp(htmod.MODE.HEATING, 20, 0, self.csvLock)
         self.ht.daemon = True
         self.ht.start()
-        self.status = 0
+        self.status = 0    
 
     def neu(self, in_mode):
         self.ht.stop()
@@ -21,7 +22,7 @@ class Handler:
             mode = htmod.MODE.FREEZING
         else:
             raise ValueError("Error: Unknown mode")
-        self.ht = htmod.HoldTemp(mode, 20, 0)
+        self.ht = htmod.HoldTemp(mode, 20, 0, self.csvLock)
         self.ht.daemon = True
         self.ht.start()
 
@@ -56,7 +57,8 @@ def server_index():
 
 @app.route('/test.csv')
 def server_return_csv():
-    return send_from_directory('/home/pi/python-server-brew-control/', 'test.csv', cache_timeout=1)
+    with handler.csvLock:
+        return send_from_directory('/home/pi/python-server-brew-control/', 'test.csv', cache_timeout=1)
 
 @app.route('/neu', methods=['GET', 'POST'])
 def server_neu():
