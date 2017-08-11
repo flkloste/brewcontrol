@@ -131,7 +131,7 @@ def server_get_info():
         else:
             is_running = 'gestoppt'
         power_status = ''
-        if info.power_status == 1:
+        if info.power_status == 'on':
             power_status = 'Strom an'
         else:
             power_status = 'Strom aus'

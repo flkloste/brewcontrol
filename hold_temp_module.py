@@ -85,23 +85,9 @@ class HoldTemp(threading.Thread):
     def isStopped(self):
         return self._stop.isSet()
 
-    def getInfoStats(self):
-        
-        # for cooling, on and off are switched
-        power_status_int = 0
-        if self.mode == MODE.HEAT:
-            if(self.power_status == 'on'):
-                power_status_int = 1
-            else:
-                power_status_int = 0
-        else:
-            if(self.power_status == 'on'):
-                power_status_int = 0
-            else:
-                power_status_int = 1
-                
+    def getInfoStats(self):                
         result = InfoStats(self.mode, self.getSollTemp(), self.getIstTemp(),
-                           self.getIsRunning(), power_status_int)
+                           self.getIsRunning(), self.power_status)
         return result
 
     def getSollTemp(self):
