@@ -6,8 +6,8 @@ import os
 from subprocess import call
 
 class MODE:
-    HEATING = 1
-    FREEZING = 2
+    HEAT = 1
+    COOL = 2
 
 class InfoStats:
     def __init__(self, in_mode, in_soll_temp, in_ist_temp, in_is_running, in_power_status):
@@ -32,25 +32,26 @@ class HoldTemp(threading.Thread):
         self.skipCount = 1
         self.csvEntries = list()
         self.lastValues = list()
-        call(['pilight-control', '-d', 'HiFi', '-s', 'off', '-S=127.0.0.1', '-P', '5002'])
+        
+        self.pilightSystemCall('off')            
 
         self.pilight_cmd_ON = ''
         self.pilight_cmd_OFF = ''
         self.waitingTime = -1
         self.mode = in_mode
-        if(in_mode == MODE.HEATING):
+        if(in_mode == MODE.HEAT):
             self.pilight_cmd_ON = 'on'
             self.pilight_cmd_OFF = 'off'
             self.waitingTime = 1
-        elif (in_mode == MODE.FREEZING):
+        elif (in_mode == MODE.COOL):
             self.pilight_cmd_ON = 'off'
             self.pilight_cmd_OFF = 'on'
-            self.waitingTime = 100
+            self.waitingTime = 50
         else:
             raise ValueError("Error: No in_mode selected")
 
 
-        self.power_status = 0
+        self.power_status = 'off'
 
         self.soll_temp = in_soll_temp
         self.soll_temp_lock = threading.Lock()
@@ -74,13 +75,33 @@ class HoldTemp(threading.Thread):
         except OSError:
             pass
         self._stop.set()
+        
+    def pilightSystemCall(self, status):
+        if (status not in ['on', 'off']):
+            print "Invalid status. Must be 'on' or 'off'"
+            return
+        call(['pilight-control', '-d', 'HiFi', '-s', status, '-S=127.0.0.1', '-P', '5002'])
 
     def isStopped(self):
         return self._stop.isSet()
 
     def getInfoStats(self):
+        
+        # for cooling, on and off are switched
+        power_status_int = 0
+        if self.mode == MODE.HEAT:
+            if(self.power_status == 'on'):
+                power_status_int = 1
+            else:
+                power_status_int = 0
+        else:
+            if(self.power_status == 'on'):
+                power_status_int = 0
+            else:
+                power_status_int = 1
+                
         result = InfoStats(self.mode, self.getSollTemp(), self.getIstTemp(),
-                           self.getIsRunning(), self.power_status)
+                           self.getIsRunning(), power_status_int)
         return result
 
     def getSollTemp(self):
@@ -108,7 +129,7 @@ class HoldTemp(threading.Thread):
             self.is_running = 1
 
     def stopControl(self):
-        call(['pilight-control', '-d', 'HiFi', '-s', 'off', '-S=127.0.0.1', '-P', '5002'])
+        self.pilightSystemCall('off')
         with self.is_running_lock:
             self.is_running = 0
 
@@ -169,23 +190,17 @@ class HoldTemp(threading.Thread):
 
     def startHeating(self):
         if(self.getIsRunning() == 1):
-            #if(self.power_status == 0):
-            call(['pilight-control', '-d', 'HiFi', '-s', self.pilight_cmd_ON, '-S=127.0.0.1', '-P', '5002'])
-            if(self.mode == MODE.HEATING):
-                self.power_status = 1
-            else:
-                self.power_status = 0
+            if(self.power_status == self.pilight_cmd_OFF):
+                self.pilightSystemCall(self.pilight_cmd_ON)
+                self.power_status = self.pilight_cmd_ON
 
     def stopHeating(self):
         if(self.getIsRunning() == 1):
-            #if(self.power_status == 1):
-            call(['pilight-control', '-d', 'HiFi', '-s', self.pilight_cmd_OFF, '-S=127.0.0.1', '-P', '5002'])
-            if(self.mode == MODE.HEATING):
-                self.power_status = 0
-            else:
-                self.power_status = 1
+            if(self.power_status == self.pilight_cmd_ON):
+                self.pilightSystemCall(self.pilight_cmd_OFF)
+                self.power_status = self.pilight_cmd_OFF
 
-    # attach entry to list whereby list is automatically shortened when exceeding size 1000
+    # attach entry to list whereby list is automatically shortened when exceeding size 4000
     def attachToCsvEntryList(self, entry):
         self.iterationCount = self.iterationCount + 1
         if len(self.csvEntries) < 4000:
@@ -239,7 +254,7 @@ class HoldTemp(threading.Thread):
                 elif istTemp < sollTemp:
 
                     #temp steigt und ist kurz vorm ziel
-                    if self.isRising() and istTemp > sollTemp-1:
+                    if (self.mode != MODE.COOL) and self.isRising() and istTemp > sollTemp-1:
                         self.stopHeating()
                     else:
                         self.startHeating()
@@ -282,5 +297,5 @@ if __name__ == "__main__":
         print 'ungueltige temperatur!'
         sys.exit()
 
-    ht = HoldTemp(MODE.HEATING, 50, 1)
+    ht = HoldTemp(MODE.HEAT, 50, 1)
     ht.start()

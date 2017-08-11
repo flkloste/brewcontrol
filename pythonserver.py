@@ -7,7 +7,7 @@ import threading
 class Handler:
     def __init__(self):
         self.csvLock = threading.Lock()
-        self.ht = htmod.HoldTemp(htmod.MODE.HEATING, 20, 0, self.csvLock)
+        self.ht = htmod.HoldTemp(htmod.MODE.HEAT, 20, 0, self.csvLock)
         self.ht.daemon = True
         self.ht.start()
         self.status = 0    
@@ -17,9 +17,9 @@ class Handler:
 
         mode = ''
         if(in_mode == 'h'):
-            mode = htmod.MODE.HEATING
+            mode = htmod.MODE.HEAT
         elif(in_mode == 'f'):
-            mode = htmod.MODE.FREEZING
+            mode = htmod.MODE.COOL
         else:
             raise ValueError("Error: Unknown mode")
         self.ht = htmod.HoldTemp(mode, 20, 0, self.csvLock)
@@ -116,7 +116,7 @@ def server_get_info():
     if request.method == 'POST':
         info = handler.get_info()
         mode = ''
-        if info.mode == htmod.MODE.HEATING:
+        if info.mode == htmod.MODE.HEAT:
             mode = 'Heizen'
         else:
             mode = 'Kuehlen'
