@@ -61,7 +61,7 @@ def server_return_csv():
         return send_from_directory('/home/pi/python-server-brew-control/', 'test.csv', cache_timeout=1)
     
 @app.route('/data.csv')
-def server_return_csv():
+def server_download_csv():
     with handler.csvLock:
         return send_from_directory('/home/pi/python-server-brew-control/', 'test.csv', cache_timeout=1, as_attachment=True)
 
