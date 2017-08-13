@@ -180,7 +180,7 @@ class HoldTemp(threading.Thread):
             if(self.power_status == self.pilight_cmd_OFF):
                 self.pilightSystemCall(self.pilight_cmd_ON)
                 self.power_status = self.pilight_cmd_ON
-				self.successiveStopHeatings = -1
+                self.successiveStopHeatings = -1
 
     def stopHeating(self):
         if(self.getIsRunning() == 1):
