@@ -28,7 +28,7 @@ class HoldTemp(threading.Thread):
         except OSError:
             pass
         
-        self.successiveStopHeatings = 0
+        self.successiveStopHeatings = -1
         self.iterationCount = 0
         self.skipCount = 1
         self.csvEntries = list()
