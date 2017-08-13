@@ -28,6 +28,7 @@ class HoldTemp(threading.Thread):
         except OSError:
             pass
         
+		self.successiveStopHeatings = 0
         self.iterationCount = 0
         self.skipCount = 1
         self.csvEntries = list()
@@ -179,12 +180,24 @@ class HoldTemp(threading.Thread):
             if(self.power_status == self.pilight_cmd_OFF):
                 self.pilightSystemCall(self.pilight_cmd_ON)
                 self.power_status = self.pilight_cmd_ON
+				self.successiveStopHeatings = -1
 
     def stopHeating(self):
         if(self.getIsRunning() == 1):
+        
+            self.successiveStopHeatings += 1
+			
             if(self.power_status == self.pilight_cmd_ON):
+                if mode == MODE.COOL and self.successiveStopHeatings % 3 != 0:
+                    return
                 self.pilightSystemCall(self.pilight_cmd_OFF)
                 self.power_status = self.pilight_cmd_OFF
+
+            # one time period of cooling should be enough even if temperature is still above SOLL
+            elif if self.mode == MODE.COOL and self.getIstTemp() < self.getSollTemp + 1:
+                    self.pilightSystemCall(self.pilight_cmd_ON)
+                    self.power_status = self.pilight_cmd_ON
+                    
 
     # attach entry to list whereby list is automatically shortened when exceeding size 4000
     def attachToCsvEntryList(self, entry):
