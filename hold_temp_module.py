@@ -188,13 +188,13 @@ class HoldTemp(threading.Thread):
             self.successiveStopHeatings += 1
 			
             if(self.power_status == self.pilight_cmd_ON):
-                if mode == MODE.COOL and self.successiveStopHeatings % 3 != 0:
-                    return
+                if self.mode == MODE.COOL and self.successiveStopHeatings % 3 != 0:
+                    return 0
                 self.pilightSystemCall(self.pilight_cmd_OFF)
                 self.power_status = self.pilight_cmd_OFF
 
             # turn fridge off after one time period of cooling
-            elif self.mode == MODE.COOL and (self.getSollTemp() < self.getIstTemp() < (self.getIstTemp() + 1)):
+            elif self.mode == MODE.COOL and (self.getSollTemp() < self.getIstTemp() < (self.getIstTemp() + 0.5)):
                     self.pilightSystemCall(self.pilight_cmd_ON)
                     self.power_status = self.pilight_cmd_ON
                     
