@@ -194,7 +194,7 @@ class HoldTemp(threading.Thread):
                 self.power_status = self.pilight_cmd_OFF
 
             # turn fridge off after one time period of cooling
-            elif if self.mode == MODE.COOL and (self.getSollTemp() < self.getIstTemp() < (self.getIstTemp() + 1)):
+            elif self.mode == MODE.COOL and (self.getSollTemp() < self.getIstTemp() < (self.getIstTemp() + 1)):
                     self.pilightSystemCall(self.pilight_cmd_ON)
                     self.power_status = self.pilight_cmd_ON
                     
