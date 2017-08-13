@@ -28,6 +28,7 @@ class HoldTemp(threading.Thread):
         except OSError:
             pass
         
+        self.successiveStopHeatings = -1
         self.iterationCount = 0
         self.skipCount = 1
         self.csvEntries = list()
@@ -81,12 +82,13 @@ class HoldTemp(threading.Thread):
             print "Invalid status. Must be 'on' or 'off'"
             return
         call(['pilight-control', '-d', 'HiFi', '-s', status, '-S=127.0.0.1', '-P', '5002'])
+        self.power_status = status
 
     def isStopped(self):
         return self._stop.isSet()
 
     def getInfoStats(self):                
-        result = InfoStats(self.mode, self.getSollTemp(), self.getIstTemp(),
+        result = InfoStats(self.mode, self.getSollTemp(), self.getIstTempString(),
                            self.getIsRunning(), self.power_status)
         return result
 
@@ -98,9 +100,13 @@ class HoldTemp(threading.Thread):
         with self.soll_temp_lock:
             self.soll_temp = int(in_new_soll_temp)
 
-    def getIstTemp(self):
+    def getIstTempString(self):
         with self.ist_temp_lock:
             return str('%.2f' % self.ist_temp)
+        
+    def getIstTempFloat(self):
+        with self.ist_temp_lock:
+            return self.ist_temp
 
     def setIstTemp(self, in_new_ist_temp):
         with self.ist_temp_lock:
@@ -156,7 +162,6 @@ class HoldTemp(threading.Thread):
 
     def storeValue(self, value):
         #speicher nur neue Werte
-        # if value not in self.lastValues: # achtung eigentlich nur letzen wert ueberpruefen
         if len(self.lastValues) == 0 or value != self.lastValues[-1]:
             if len(self.lastValues) > 2:
                 self.lastValues.pop(0)
@@ -178,13 +183,22 @@ class HoldTemp(threading.Thread):
         if(self.getIsRunning() == 1):
             if(self.power_status == self.pilight_cmd_OFF):
                 self.pilightSystemCall(self.pilight_cmd_ON)
-                self.power_status = self.pilight_cmd_ON
+                self.successiveStopHeatings = -1
 
     def stopHeating(self):
         if(self.getIsRunning() == 1):
+        
+            self.successiveStopHeatings += 1
+			
             if(self.power_status == self.pilight_cmd_ON):
+                if self.mode == MODE.COOL and self.successiveStopHeatings % 3 != 0:
+                    return 0
                 self.pilightSystemCall(self.pilight_cmd_OFF)
-                self.power_status = self.pilight_cmd_OFF
+
+            # turn fridge off after one time period of cooling
+            elif self.mode == MODE.COOL and (self.getSollTemp() < self.getIstTempFloat() < (self.getSollTemp() + 0.5)):
+                    self.pilightSystemCall(self.pilight_cmd_ON)
+                    
 
     # attach entry to list whereby list is automatically shortened when exceeding size 4000
     def attachToCsvEntryList(self, entry):
@@ -245,8 +259,6 @@ class HoldTemp(threading.Thread):
                     else:
                         self.startHeating()
 
-                time.sleep(self.waitingTime)
-
                 if(self.is_running == 1):
                     ## log.write('%s,%s,%s\n' % ('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()), ('%.2f' % istTemp), sollTemp))
                     ##  log.flush()
@@ -254,7 +266,7 @@ class HoldTemp(threading.Thread):
                     self.attachToCsvEntryList(csvEntry)
                     self.writeCsv()
 
-                    #print 'aktuelle temp: %s; gewuenschte temp: %s, heizt: %s' % (istTemp, sollTemp, self.power_status)
+                time.sleep(self.waitingTime)
 
         except:
             print 'Good-bye'
