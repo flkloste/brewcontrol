@@ -1,0 +1,52 @@
+{
+	"devices": {
+		"Licht": {
+			"protocol": [ "kaku_switch" ],
+			"id": [{
+				"id": 133785,
+				"unit": 0
+			}],
+			"state": "off"
+		},
+		"HiFi": {
+			"protocol": [ "kaku_switch_old" ],
+			"id": [{
+				"id": 2,
+				"unit": 0
+			}],
+			"state": "off"
+		}
+	},
+	"rules": {},
+	"gui": {
+		"Licht": {
+			"name": "Licht",
+			"group": [ "MeineSwitches" ],
+			"media": [ "all" ]
+		}
+	},
+	"settings": {
+		"log-level": 6,
+		"pid-file": "/var/run/pilight.pid",
+		"log-file": "/var/log/pilight.log",
+		"webserver-enable": 0,
+		"webserver-root": "/usr/local/share/pilight/",
+		"webserver-http-port": 5001,
+		"webserver-cache": 1,
+		"standalone": 1,
+		"port": 5002
+	},
+	"hardware": {
+		"433gpio": {
+			"sender": 0,
+			"receiver": 1
+		}
+	},
+	"registry": {
+		"pilight": {
+			"version": {
+				"current": "7.0"
+			}
+		}
+	}
+}
