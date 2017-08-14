@@ -39,7 +39,7 @@ class Handler:
         self.ht.setSollTemp(soll_temp)
 
     def get_temp(self):
-        return self.ht.getIstTemp()
+        return self.ht.getIstTempString()
 
     def get_info(self):
         return self.ht.getInfoStats()
