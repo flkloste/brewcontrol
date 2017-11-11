@@ -47,7 +47,7 @@ class HoldTemp(threading.Thread):
         elif (in_mode == MODE.COOL):
             self.pilight_cmd_ON = 'off'
             self.pilight_cmd_OFF = 'on'
-            self.waitingTime = 50
+            self.waitingTime = 80
         else:
             raise ValueError("Error: No in_mode selected")
 
@@ -191,12 +191,12 @@ class HoldTemp(threading.Thread):
             self.successiveStopHeatings += 1
 			
             if(self.power_status == self.pilight_cmd_ON):
-                if self.mode == MODE.COOL and self.successiveStopHeatings % 3 != 0:
+                if self.mode == MODE.COOL and self.successiveStopHeatings % 6 != 0:
                     return 0
                 self.pilightSystemCall(self.pilight_cmd_OFF)
 
             # turn fridge off after one time period of cooling
-            elif self.mode == MODE.COOL and (self.getSollTemp() < self.getIstTempFloat() < (self.getSollTemp() + 0.5)):
+            elif self.mode == MODE.COOL and (self.getSollTemp() < self.getIstTempFloat() < (self.getSollTemp() + 0.3)):
                     self.pilightSystemCall(self.pilight_cmd_ON)
                     
 

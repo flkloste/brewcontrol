@@ -35,7 +35,7 @@ class Handler:
         self.ht.stopControl()
 
     def set_temp(self, soll_temp):
-        print "handler set_temp %s\n" % soll_temp
+#        print "handler set_temp %s\n" % soll_temp
         self.ht.setSollTemp(soll_temp)
 
     def get_temp(self):
@@ -143,4 +143,4 @@ def server_get_info():
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', threaded=True)
