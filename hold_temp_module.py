@@ -127,7 +127,8 @@ class HoldTemp(threading.Thread):
 
     # function: read and parse sensor data file
     def read_sensor(self):
-        path = "/sys/bus/w1/devices/28-04168415c8ff/w1_slave"
+        #path = "/sys/bus/w1/devices/28-04168415c8ff/w1_slave"
+        path = "/sys/bus/w1/devices/28-021481420bff/w1_slave"
         value = "U"
         try:
             f = open(path, "r")
