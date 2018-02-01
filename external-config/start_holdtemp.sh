@@ -7,5 +7,5 @@ sudo iptables -A INPUT -s 127.0.01 -j ACCEPT
 sleep 5
 #sudo python /home/pi/holdtemp/bt_controller.py
 sudo noip2
-sudo python /home/pi/python-server-brew-control/pythonserver.py > /home/pi/pythonserver.log 2>&1
+sudo python -u /home/pi/python-server-brew-control/pythonserver.py &> /home/pi/pythonserver_error.log
 
