@@ -147,9 +147,9 @@ class HoldTemp(threading.Thread):
         result = 0
         try:
             result = self.read_sensor()
-            while(result == 85.0):
-                result = self.read_sensor()
+            while(result == 85.0 or result == "U"):
                 time.sleep(1)
+                result = self.read_sensor()
         except:
             # try again
             time.sleep(1)
