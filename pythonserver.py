@@ -66,11 +66,30 @@ handler = Handler()
 ##### Basic Auth #######
 ########################
 
-def check_auth(username, password):
+def check_auth(in_username, in_password):
     """This function is called to check if a username /
     password combination is valid.
     """
-    return username == 'fkl' and password == 'fkl'
+    try:
+        with open("credo", "r") as f:
+            username = ""
+            password = ""
+            for line in f:
+                m = re.match(r"^user=([^\n\r]+)", line)
+                if m:
+                    username = m.group(1)
+                m = re.match(r"^pw=([^\n\r]+)", line)
+                if m:
+                    password = m.group(1)
+            if username not "" and password not "":
+                return username == in_username and password == in_password
+    
+    except:
+        pass
+    
+    return False
+        
+    
 
 def authenticate():
     """Sends a 401 response that enables basic auth"""
