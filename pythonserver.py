@@ -1,10 +1,16 @@
 from flask import Flask, render_template, redirect, url_for,request
 from flask import make_response
-from flask import send_from_directory
+from functools import wraps
+from flask import request, Response
+#from flask import send_from_directory
 import hold_temp_module as htmod
 import threading
-import csv
 import StringIO
+
+
+########################
+## Hold Temp Handler ###
+########################
 
 class Handler:
     def __init__(self):
@@ -55,8 +61,41 @@ app = Flask(__name__, template_folder='/home/pi/python-server-brew-control/')
 app._static_folder = '/home/pi/python-server-brew-control/'
 handler = Handler()
 
+
+########################
+##### Basic Auth #######
+########################
+
+def check_auth(username, password):
+    """This function is called to check if a username /
+    password combination is valid.
+    """
+    return username == 'fkl' and password == 'fkl'
+
+def authenticate():
+    """Sends a 401 response that enables basic auth"""
+    return Response(
+    'Could not verify your access level for that URL.\n'
+    'You have to login with proper credentials', 401,
+    {'WWW-Authenticate': 'Basic realm="Login Required"'})
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+        return f(*args, **kwargs)
+    return decorated
+
+    
+########################
+#### HTML Requests #####
+########################
+
 @app.route('/')
 @app.route("/index")
+@requires_auth
 def server_index():
     return render_template('index.html')
 
@@ -75,9 +114,9 @@ def server_return_csv():
     output.headers["Content-type"] = "text/csv"
     return output
 
-def server_download_csv():
-    with handler.csvLock:
-        return send_from_directory('/home/pi/python-server-brew-control/', 'test.csv', cache_timeout=1, as_attachment=True)
+#def server_download_csv():
+#    with handler.csvLock:
+#        return send_from_directory('/home/pi/python-server-brew-control/', 'test.csv', cache_timeout=1, as_attachment=True)
 
 @app.route('/neu', methods=['GET', 'POST'])
 def server_neu():
