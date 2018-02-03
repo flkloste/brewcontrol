@@ -6,6 +6,7 @@ from flask import request, Response
 import hold_temp_module as htmod
 import threading
 import StringIO
+import sys, re
 
 
 ########################
@@ -78,14 +79,17 @@ def check_auth(in_username, in_password):
                 m = re.match(r"^user=([^\n\r]+)", line)
                 if m:
                     username = m.group(1)
+                    print username
                 m = re.match(r"^pw=([^\n\r]+)", line)
                 if m:
                     password = m.group(1)
-            if username not "" and password not "":
+                    print password
+            if username != "" and password != "":
                 return username == in_username and password == in_password
     
     except:
-        pass
+        print "except"
+        print sys.exc_info()
     
     return False
         
