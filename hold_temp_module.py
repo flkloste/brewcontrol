@@ -71,10 +71,10 @@ class HoldTemp(threading.Thread):
     # make thread stoppable
     def stop(self):
         # remove csv
-        try:
-            os.remove(self.csvFilePath)
-        except OSError:
-            pass
+        #try:
+        #    os.remove(self.csvFilePath)
+        #except OSError:
+        #    pass
         self._stop.set()
         
     def pilightSystemCall(self, status):
