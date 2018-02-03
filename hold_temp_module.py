@@ -203,15 +203,16 @@ class HoldTemp(threading.Thread):
 
     # attach entry to list whereby list is automatically shortened when exceeding size 4000
     def attachToCsvEntryList(self, entry):
-        self.iterationCount = self.iterationCount + 1
-        if len(self.csvEntries) < 4000:
-            if self.iterationCount % self.skipCount == 0:
-                self.csvEntries.append(entry)
-        else:
-            self.skipCount = self.skipCount * 2  # adjust intervals between values for future values
-            del self.csvEntries[1::2] # delete every second item
+        with self.csv_lock:
+            self.iterationCount = self.iterationCount + 1
+            if len(self.csvEntries) < 4000:
+                if self.iterationCount % self.skipCount == 0:
+                    self.csvEntries.append(entry)
+            else:
+                self.skipCount = self.skipCount * 2  # adjust intervals between values for future values
+                del self.csvEntries[1::2] # delete every second item
 
-
+                
     def writeCsv(self):
         #print self.csvFilePath
         with self.csv_lock:
@@ -220,6 +221,11 @@ class HoldTemp(threading.Thread):
                 csvFile.write("Zeit,Ist,Soll\n")
                 for line in self.csvEntries:
                     csvFile.write(line)
+                    
+                    
+    def getCsv(self):
+        with self.csv_lock:
+            return self.csvEntries
 
 
     # main routine
@@ -265,7 +271,7 @@ class HoldTemp(threading.Thread):
                     ##  log.flush()
                     csvEntry = '%s,%s,%s\n' % ('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()), ('%.2f' % istTemp), sollTemp)
                     self.attachToCsvEntryList(csvEntry)
-                    self.writeCsv()
+                    #self.writeCsv()
 
                 time.sleep(self.waitingTime)
 

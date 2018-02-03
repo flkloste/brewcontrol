@@ -3,6 +3,8 @@ from flask import make_response
 from flask import send_from_directory
 import hold_temp_module as htmod
 import threading
+import csv
+import StringIO
 
 class Handler:
     def __init__(self):
@@ -43,6 +45,9 @@ class Handler:
 
     def get_info(self):
         return self.ht.getInfoStats()
+        
+    def get_csv_as_list(self):
+        return self.ht.getCsv()
 
 
 
@@ -55,12 +60,19 @@ handler = Handler()
 def server_index():
     return render_template('index.html')
 
+@app.route('/data.csv')
 @app.route('/test.csv')
 def server_return_csv():
-    with handler.csvLock:
-        return send_from_directory('/home/pi/python-server-brew-control/', 'test.csv', cache_timeout=1)
-    
-@app.route('/data.csv')
+#    with handler.csvLock:
+#        return send_from_directory('/home/pi/python-server-brew-control/', 'test.csv', cache_timeout=1)
+    si = StringIO.StringIO()
+    cw = csv.writer(si)
+    cw.writerows(handler.get_csv_as_list())
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = "attachment; filename=export.csv"
+    output.headers["Content-type"] = "text/csv"
+    return output
+
 def server_download_csv():
     with handler.csvLock:
         return send_from_directory('/home/pi/python-server-brew-control/', 'test.csv', cache_timeout=1, as_attachment=True)
