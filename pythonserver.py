@@ -101,6 +101,7 @@ def server_index():
 
 @app.route('/data.csv')
 @app.route('/test.csv')
+@requires_auth
 def server_return_csv():
 #    with handler.csvLock:
 #        return send_from_directory('/home/pi/python-server-brew-control/', 'test.csv', cache_timeout=1)
@@ -119,6 +120,7 @@ def server_return_csv():
 #        return send_from_directory('/home/pi/python-server-brew-control/', 'test.csv', cache_timeout=1, as_attachment=True)
 
 @app.route('/neu', methods=['GET', 'POST'])
+@requires_auth
 def server_neu():
     if request.method == 'POST':
         mode = request.form['mode']
@@ -131,6 +133,7 @@ def server_neu():
         return resp
 
 @app.route('/set_temp', methods=['GET', 'POST'])
+@requires_auth
 def server_set_temp():
     if request.method == 'POST':
         datafromjs = request.form['mydata']
@@ -146,6 +149,7 @@ def server_set_temp():
         return resp
 
 @app.route('/start', methods=['GET', 'POST'])
+@requires_auth
 def server_start():
     if request.method == 'POST':
         handler.start()
@@ -154,6 +158,7 @@ def server_start():
         return resp
 
 @app.route('/stop', methods=['GET', 'POST'])
+@requires_auth
 def server_stop():
     if request.method == 'POST':
         handler.stop()
@@ -162,6 +167,7 @@ def server_stop():
         return resp
 
 @app.route('/get_temp', methods=['GET', 'POST'])
+@requires_auth
 def server_get_temp():
     if request.method == 'POST':
         temp = handler.get_temp()
@@ -170,6 +176,7 @@ def server_get_temp():
         return resp
 
 @app.route('/get_info', methods=['GET', 'POST'])
+@requires_auth
 def server_get_info():
     if request.method == 'POST':
         info = handler.get_info()
