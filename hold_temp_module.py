@@ -21,12 +21,12 @@ class HoldTemp(threading.Thread):
     def __init__(self, in_mode, in_soll_temp, in_is_running, in_csv_lock):
         threading.Thread.__init__(self)
         
-        basepath = os.path.dirname(__file__)
-        self.csvFilePath = os.path.abspath(os.path.join(basepath, "test.csv"))
-        try:
-            os.remove(self.csvFilePath)
-        except OSError:
-            pass
+        #basepath = os.path.dirname(__file__)
+        #self.csvFilePath = os.path.abspath(os.path.join(basepath, "test.csv"))
+        #try:
+        #    os.remove(self.csvFilePath)
+        #except OSError:
+        #    pass
         
         self.successiveStopHeatings = -1
         self.iterationCount = 0
@@ -63,10 +63,10 @@ class HoldTemp(threading.Thread):
         self.csv_lock = in_csv_lock
         self._stop = threading.Event()
 
-        with self.csv_lock:
-            with open("test.csv", "w") as csvFile:
-                csvFile.truncate()
-                csvFile.write("Zeit,Ist,Soll\n")
+        #with self.csv_lock:
+        #    with open("test.csv", "w") as csvFile:
+        #        csvFile.truncate()
+        #        csvFile.write("Zeit,Ist,Soll\n")
 
     # make thread stoppable
     def stop(self):
@@ -213,14 +213,14 @@ class HoldTemp(threading.Thread):
                 del self.csvEntries[1::2] # delete every second item
 
                 
-    def writeCsv(self):
-        #print self.csvFilePath
-        with self.csv_lock:
-            with open(self.csvFilePath, "w") as csvFile:
-                csvFile.truncate()
-                csvFile.write("Zeit,Ist,Soll\n")
-                for line in self.csvEntries:
-                    csvFile.write(line)
+    #def writeCsv(self):
+    #    #print self.csvFilePath
+    #    with self.csv_lock:
+    #        with open(self.csvFilePath, "w") as csvFile:
+    #            csvFile.truncate()
+    #            csvFile.write("Zeit,Ist,Soll\n")
+    #           for line in self.csvEntries:
+    #                csvFile.write(line)
                     
                     
     def getCsv(self):

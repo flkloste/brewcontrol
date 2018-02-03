@@ -65,10 +65,12 @@ def server_index():
 def server_return_csv():
 #    with handler.csvLock:
 #        return send_from_directory('/home/pi/python-server-brew-control/', 'test.csv', cache_timeout=1)
-    si = StringIO.StringIO()
-    cw = csv.writer(si)
-    cw.writerows(handler.get_csv_as_list())
-    output = make_response(si.getvalue())
+    csv = StringIO.StringIO()
+    csv.write("Zeit,Ist,Soll\n");
+    for row in handler.get_csv_as_list():
+        csv.write(row)
+    
+    output = make_response(csv.getvalue())
     output.headers["Content-Disposition"] = "attachment; filename=export.csv"
     output.headers["Content-type"] = "text/csv"
     return output
