@@ -3,56 +3,64 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
-    <div id="myDiv" style="width: 800px; height: 600px;">
-        <!-- Plotly chart will be drawn inside this DIV -->
-    </div>
-    <font face="helvetica">
-        <table>
-            <tbody>
-                <tr>
-                    <td align="right">Ist-Temperatur</td>
-                    <td> </td>
-                    <td align="right"> <strong style="font-size: 35px;"> <span class="jsValueIstTemp">-</span> °C </strong></td>
-                </tr>
-                <tr> </tr>
-                <tr> </tr>
-                <tr>
-                    <td align="right">Soll-Temperatur</td>
-                    <td> </td>
-                    <td align="right"> <span class="jsValueSollTemp">-</span> °C</td>
-                </tr>
-                <tr>
-                    <td align="right">Power</td>
-                    <td> </td>
-                    <td align="right"> <span class="jsValueStrom">-</span></td>
-                </tr>
-                <tr>
-                    <td align="right">Status</td>
-                    <td> </td>
-                    <td align="right"> <span class="jsValueStatus">-</span></td>
-                </tr>
-                <tr>
-                    <td align="right">Modus</td>
-                    <td> </td>
-                    <td align="right"> <span class="jsValueModus">-</span></td>
-                </tr>
-            </tbody>
-        </table>
-        <br>
-        
-        <button type="submit" onclick="window.open('data.csv')">Download CSV</button>
+    <table>
+        <tr>
+            <th>
+                <font face="helvetica">
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td align="right">Ist-Temperatur</td>
+                                <td> </td>
+                                <td align="right"> <strong style="font-size: 35px;"> <span class="jsValueIstTemp">-</span> °C </strong></td>
+                            </tr>
+                            <tr> </tr>
+                            <tr> </tr>
+                            <tr>
+                                <td align="right">Soll-Temperatur</td>
+                                <td> </td>
+                                <td align="right"> <span class="jsValueSollTemp">-</span> °C</td>
+                            </tr>
+                            <tr>
+                                <td align="right">Power</td>
+                                <td> </td>
+                                <td align="right"> <span class="jsValueStrom">-</span></td>
+                            </tr>
+                            <tr>
+                                <td align="right">Status</td>
+                                <td> </td>
+                                <td align="right"> <span class="jsValueStatus">-</span></td>
+                            </tr>
+                            <tr>
+                                <td align="right">Modus</td>
+                                <td> </td>
+                                <td align="right"> <span class="jsValueModus">-</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <br>
+                    
+                    <button type="submit" onclick="window.open('data.csv')">Download CSV</button>
 
-        <br> <br>
-        <input id="soll_temp" type="number" name="soll_temp" pattern="\d*" maxlength="2">
-        <input id="settemp" type="button" value="Set Temp" /> <br> <br>
-        <input id="start_control" type="button" value="Start" />
-        <input id="stop_control" type="button" value="Stop" /> <br> <br> <br> <br>
-		<select id="selectHeatOrCool">
-			<option value="h">Heizen</option>
-			<option value="f">Kühlen</option>
-		</select> 
-        <input id="neu" type="button" value="Neu..." />
-    </font>
+                    <br> <br>
+                    <input id="soll_temp" type="number" name="soll_temp" pattern="\d*" maxlength="2">
+                    <input id="settemp" type="button" value="Set Temp" /> <br> <br>
+                    <input id="start_control" type="button" value="Start" />
+                    <input id="stop_control" type="button" value="Stop" /> <br> <br> <br> <br>
+                    <select id="selectHeatOrCool">
+                        <option value="h">Heizen</option>
+                        <option value="f">Kühlen</option>
+                    </select> 
+                    <input id="neu" type="button" value="Neu..." />
+                </font>
+            </th>
+            <th>
+                <div id="myDiv" style="width: 800px; height: 600px;">
+                    <!-- Plotly chart will be drawn inside this DIV -->
+                </div>
+            </th>
+        </tr>
+    </table>
     <script>
         function makeplot() {
             Plotly.d3.csv("test.csv", function(data){ processData(data) } );
