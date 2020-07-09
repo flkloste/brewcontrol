@@ -101,16 +101,10 @@ class HoldTemp(threading.Thread):
             self.soll_temp = int(in_new_soll_temp)
 
     def getIstTempString(self):
-        with self.ist_temp_lock:
-            return str('%.2f' % self.ist_temp)
+        return str('%.2f' % self.getIstTempFloat())
         
     def getIstTempFloat(self):
-        with self.ist_temp_lock:
-            return self.ist_temp
-
-    def setIstTemp(self, in_new_ist_temp):
-        with self.ist_temp_lock:
-            self.ist_temp = float(in_new_ist_temp)
+        return self.getTemp()
 
     def getIsRunning(self):
         with self.is_running_lock:
@@ -144,22 +138,21 @@ class HoldTemp(threading.Thread):
         return value
 
     def getTemp(self):
-        result = 0
-        try:
-            result = self.read_sensor()
-            while(result == 85.0 or result == "U"):
-                time.sleep(1)
+        with self.ist_temp_lock:
+            result = 0
+            try:
                 result = self.read_sensor()
-        except:
-            # try again
-            time.sleep(1)
-            return self.getTemp()
-            
-        self.storeValue(result)
-        # temp_des;temp_akt;isHeating
-        # self.ist_temp_queue.put("%s;%s;%s"%(self.temp_des, result, self.isHeating))
-        self.setIstTemp(result)
-        return result
+                while(result == 85.0 or result == "U"):
+                    time.sleep(1)
+                    result = self.read_sensor()
+            except:
+                # try again
+                time.sleep(1)
+                return self.getTemp()
+                
+            # temp_des;temp_akt;isHeating
+            # self.ist_temp_queue.put("%s;%s;%s"%(self.temp_des, result, self.isHeating))
+            return result
 
     def storeValue(self, value):
         #speicher nur neue Werte
@@ -246,6 +239,7 @@ class HoldTemp(threading.Thread):
             while(not self.isStopped()):
 
                 istTemp = self.getTemp()
+                self.storeValue(istTemp)
                 sollTemp = self.getSollTemp()
 
                 # temp ist drueber
