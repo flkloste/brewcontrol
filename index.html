@@ -45,13 +45,18 @@
                     <br> <br>
                     <input id="soll_temp" type="number" name="soll_temp" pattern="\d*" maxlength="2">
                     <input id="settemp" type="button" value="Set Temp" /> <br> <br>
+                    <input id="hysterese" type="number" name="hysterese" pattern="\d*" maxlength="2">
+                    <input id="sethysterese" type="button" value="Set Hysterese (seconds)" /> <br> <br>
                     <input id="start_control" type="button" value="Start" />
                     <input id="stop_control" type="button" value="Stop" /> <br> <br> <br> <br>
                     <select id="selectHeatOrCool">
                         <option value="h">Heizen</option>
                         <option value="f">Kühlen</option>
                     </select> 
-                    <input id="neu" type="button" value="Neu..." />
+                    <input id="neu" type="button" value="Neu..." /> <br> <br>
+                    
+                    <input type="checkbox" id="checkbox_autorefresh" name="checkbox_autorefresh" checked>
+                    <label for="checkbox_autorefresh">Auto Refresh Plot</label>
                 </font>
             </th>
             <th>
@@ -148,7 +153,8 @@
         }
            
         makeplot();
-        setInterval(makeplot, 5000);
+        var plot_interval = null;
+        plot_interval = setInterval(makeplot, 5000);
         setInterval(updateTemperature, 1000);
          
     </script>
@@ -165,6 +171,16 @@
                 	data: { mydata: soll_temp_value }
             	});
             }); 
+
+            $('#checkbox_autorefresh').change(function() {
+                if(this.checked) {
+                    plot_interval = setInterval(makeplot, 5000);
+                }
+                else
+                {
+                    clearInterval(plot_interval); // stop the interval
+                }       
+            });
 					
         $("#neu").click(function(){
 			

@@ -5,6 +5,7 @@ import hold_temp_module as htmod
 import threading
 import csv
 import StringIO
+import os
 
 class Handler:
     def __init__(self):
@@ -50,9 +51,9 @@ class Handler:
         return self.ht.getCsv()
 
 
-
-app = Flask(__name__, template_folder='/home/pi/python-server-brew-control/')
-app._static_folder = '/home/pi/python-server-brew-control/'
+dir_path = os.path.dirname(os.path.realpath(__file__))
+app = Flask(__name__, template_folder=dir_path)
+app._static_folder = dir_path
 handler = Handler()
 
 @app.route('/')
