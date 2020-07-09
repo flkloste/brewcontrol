@@ -38,8 +38,10 @@ class Handler:
         self.ht.stopControl()
 
     def set_temp(self, soll_temp):
-#        print "handler set_temp %s\n" % soll_temp
         self.ht.setSollTemp(soll_temp)
+
+    def set_hysterese(self, hysterese):
+        self.ht.setHysterese(hysterese)
 
     def get_temp(self):
         return self.ht.getIstTempString()
@@ -67,7 +69,7 @@ def server_return_csv():
 #    with handler.csvLock:
 #        return send_from_directory('/home/pi/python-server-brew-control/', 'test.csv', cache_timeout=1)
     csv = StringIO.StringIO()
-    csv.write("Zeit,Ist,Soll\n");
+    csv.write("Zeit,Ist,Soll,Freq\n");
     for row in handler.get_csv_as_list():
         csv.write(row)
     
@@ -107,6 +109,21 @@ def server_set_temp():
         resp.headers['Content-Type'] = "application/json"
         return resp
 
+@app.route('/set_hysterese', methods=['GET', 'POST'])
+def server_set_hysterese():
+    if request.method == 'POST':
+        datafromjs = request.form['mydata']
+        if htmod.isInt(datafromjs):
+            datafromjs = int(datafromjs)
+        if htmod.isInt(datafromjs) and datafromjs >= 0 and datafromjs < 300:
+            handler.set_hysterese(datafromjs)
+        else:
+            print "falsche inegabe\n"
+
+        resp = make_response('{"response": "ok"}')
+        resp.headers['Content-Type'] = "application/json"
+        return resp
+
 @app.route('/start', methods=['GET', 'POST'])
 def server_start():
     if request.method == 'POST':
@@ -135,6 +152,7 @@ def server_get_temp():
 def server_get_info():
     if request.method == 'POST':
         info = handler.get_info()
+
         mode = ''
         if info.mode == htmod.MODE.HEAT:
             mode = 'Heizen'
@@ -150,7 +168,7 @@ def server_get_info():
             power_status = 'Strom an'
         else:
             power_status = 'Strom aus'
-        json_string = '{"mode": "'+ mode +'", "soll": "' + info.soll_temp + '", "ist": "' + info.ist_temp +'", "running": "' + is_running + '", "power": "' + power_status + '"}'
+        json_string = '{"mode": "'+ mode +'", "soll": "' + info.soll_temp + '", "ist": "' + info.ist_temp +'", "running": "' + is_running + '", "power": "' + power_status + '", "hysterese": "' + info.hysterese + '"}'
         # print json_string
         resp = make_response(json_string)
         resp.headers['Content-Type'] = "application/json"

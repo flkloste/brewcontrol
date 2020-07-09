@@ -36,6 +36,11 @@
                                 <td> </td>
                                 <td align="right"> <span class="jsValueModus">-</span></td>
                             </tr>
+                            <tr>
+                                <td align="right">Hysterese</td>
+                                <td> </td>
+                                <td align="right"> <span class="jsValueHysterese">-</span> s</td>
+                            </tr>
                         </tbody>
                     </table>
                     <br>
@@ -45,8 +50,8 @@
                     <br> <br>
                     <input id="soll_temp" type="number" name="soll_temp" pattern="\d*" maxlength="2">
                     <input id="settemp" type="button" value="Set Temp" /> <br> <br>
-                    <input id="hysterese" type="number" name="hysterese" pattern="\d*" maxlength="2">
-                    <input id="sethysterese" type="button" value="Set Hysterese (seconds)" /> <br> <br>
+                    <input id="soll_hysterese" type="number" name="soll_hysterese" pattern="\d*" maxlength="3">
+                    <input id="sethysterese" type="button" value="Set Hysterese" /> <br> <br>
                     <input id="start_control" type="button" value="Start" />
                     <input id="stop_control" type="button" value="Stop" /> <br> <br> <br> <br>
                     <select id="selectHeatOrCool">
@@ -75,7 +80,7 @@
         function processData(allRows) {
         
             console.log(allRows);
-            var date = [], ist = [], soll = [];
+            var date = [], ist = [], soll = [], freq = [];
         
             for (var i=0; i<allRows.length; i++) {
         	
@@ -83,17 +88,24 @@
         	date.push( row['Zeit'] );
         	ist.push( row['Ist'] );
         	soll.push( row['Soll'] );
+            freq.push( row['Freq'] );
             }
-            makePlotly( date, ist, soll );
+            makePlotly( date, ist, soll , freq);
         }
         
-        function makePlotly( x, y, z ){
+        function makePlotly( x, y, z, freq ){
             var plotDiv = document.getElementById("plot");
         	
         	var layout = {
         		xaxis: {
         			type: 'date'		
-        		}
+        		},
+                yaxis: {title: 'Temperature'},
+                yaxis2: {
+                    title: 'Anschaltfrequenz',
+                    overlaying: 'y',
+                    side: 'right'
+                }
         	};
         	
         	var trace0 = {
@@ -108,8 +120,19 @@
         	  name: 'Soll',
         	  type: 'scatter'
         	};
+            var trace2 = {
+                x: x,
+                y: freq,
+                name: 'Anschaltfrequenz',
+                yaxis: 'y2',
+                type: 'scatter',
+                mode: 'markers',
+                marker: {
+                    color: 'lightgrey'
+                }
+            };
         	
-        	var traces = [trace0, trace1];
+        	var traces = [trace0, trace1, trace2];
         
             Plotly.newPlot('myDiv', traces, layout);
         };
@@ -120,6 +143,7 @@
         	var $jsValueStrom = document.querySelector('.jsValueStrom');
         	var $jsValueStatus = document.querySelector('.jsValueStatus');
         	var $jsValueModus = document.querySelector('.jsValueModus');
+            var $jsValueHysterese = document.querySelector('.jsValueHysterese');
         	
         	var jqXHR = $.ajax({
         		type: "POST",
@@ -133,6 +157,7 @@
         			$jsValueStrom.innerHTML = json.power;
         			$jsValueStatus.innerHTML = json.running;
         			$jsValueModus.innerHTML = json.mode;
+                    $jsValueHysterese.innerHTML = json.hysterese;
 					
 					if ($jsValueStatus.innerHTML == 'aktiv')
 					{
@@ -169,6 +194,16 @@
           		url: "set_temp",
              	async: true,
                 	data: { mydata: soll_temp_value }
+            	});
+            }); 
+            
+            $("#sethysterese").click(function(){
+             var soll_hysterese_value = document.getElementById('soll_hysterese').value;
+          		var jqXHR = $.ajax({
+                type: "POST",
+          		url: "set_hysterese",
+             	async: true,
+                	data: { mydata: soll_hysterese_value }
             	});
             }); 
 

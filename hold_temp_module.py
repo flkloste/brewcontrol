@@ -9,13 +9,18 @@ class MODE:
     HEAT = 1
     COOL = 2
 
+def float2String(float_val):
+    return str('%.2f' % float_val)
+
 class InfoStats:
-    def __init__(self, in_mode, in_soll_temp, in_ist_temp, in_is_running, in_power_status):
+    def __init__(self, in_mode, in_soll_temp, in_ist_temp, in_is_running, in_power_status, in_hysterese, in_heat_cool_freq):
         self.mode = in_mode
         self.soll_temp = str(in_soll_temp)
-        self.ist_temp = str(in_ist_temp)
+        self.ist_temp = float2String(in_ist_temp)
         self.is_running = in_is_running
         self.power_status = in_power_status
+        self.hysterese = str(in_hysterese)
+        self.heat_cool_freq = float2String(in_heat_cool_freq)
 
 class HoldTemp(threading.Thread):
     def __init__(self, in_mode, in_soll_temp, in_is_running, in_csv_lock):
@@ -34,26 +39,27 @@ class HoldTemp(threading.Thread):
         self.csvEntries = list()
         self.lastValues = list()
         
-        self.pilightSystemCall('off')            
+                
 
         self.pilight_cmd_ON = ''
         self.pilight_cmd_OFF = ''
-        self.waitingTime = -1
+        self.hysterese = -1
         self.mode = in_mode
         if(in_mode == MODE.HEAT):
             self.pilight_cmd_ON = 'on'
             self.pilight_cmd_OFF = 'off'
-            self.waitingTime = 1
+            self.hysterese = 10
         elif (in_mode == MODE.COOL):
             self.pilight_cmd_ON = 'off'
             self.pilight_cmd_OFF = 'on'
-            self.waitingTime = 80
+            self.hysterese = 80
         else:
             raise ValueError("Error: No in_mode selected")
 
 
         self.power_status = 'off'
-
+        self.heat_cool_count_list = list()
+        self.heat_cool_count_lock = threading.Lock()
         self.soll_temp = in_soll_temp
         self.soll_temp_lock = threading.Lock()
         self.ist_temp = 0
@@ -62,6 +68,9 @@ class HoldTemp(threading.Thread):
         self.is_running_lock = threading.Lock()
         self.csv_lock = in_csv_lock
         self._stop = threading.Event()
+        self.hysterese_lock = threading.Lock()
+
+        self.pilightSystemCall('off')   
 
         #with self.csv_lock:
         #    with open("test.csv", "w") as csvFile:
@@ -84,26 +93,34 @@ class HoldTemp(threading.Thread):
         call(['pilight-control', '-d', 'HiFi', '-s', status, '-S=127.0.0.1', '-P', '5002'])
         self.power_status = status
 
+    def getHeatCoolFrequency(self):
+        with self.heat_cool_count_lock:
+            return len([x for x in self.heat_cool_count_list if x == 'on']) / float(len(self.heat_cool_count_list))
+
     def isStopped(self):
         return self._stop.isSet()
 
     def getInfoStats(self):                
-        result = InfoStats(self.mode, self.getSollTemp(), self.getIstTempString(),
-                           self.getIsRunning(), self.power_status)
+        result = InfoStats(self.mode, self.getSollTemp(), self.getIstTemp(), self.getIsRunning(), self.power_status, self.getHysterese(), self.getHeatCoolFrequency())
         return result
 
     def getSollTemp(self):
         with self.soll_temp_lock:
             return int(self.soll_temp)
 
+    def setHysterese(self, in_hysterse):
+        with self.hysterese_lock:
+            self.hysterese = in_hysterse
+
+    def getHysterese(self):
+        with self.hysterese_lock:
+            return self.hysterese
+
     def setSollTemp(self, in_new_soll_temp):
         with self.soll_temp_lock:
             self.soll_temp = int(in_new_soll_temp)
-
-    def getIstTempString(self):
-        return str('%.2f' % self.getIstTempFloat())
         
-    def getIstTempFloat(self):
+    def getIstTemp(self):
         return self.getTemp()
 
     def getIsRunning(self):
@@ -190,7 +207,7 @@ class HoldTemp(threading.Thread):
                 self.pilightSystemCall(self.pilight_cmd_OFF)
 
             # turn fridge off after one time period of cooling
-            elif self.mode == MODE.COOL and (self.getSollTemp() < self.getIstTempFloat() < (self.getSollTemp() + 0.3)):
+            elif self.mode == MODE.COOL and (self.getSollTemp() < self.getIstTemp() < (self.getSollTemp() + 0.3)):
                     self.pilightSystemCall(self.pilight_cmd_ON)
                     
 
@@ -260,14 +277,19 @@ class HoldTemp(threading.Thread):
                     else:
                         self.startHeating()
 
+                with self.heat_cool_count_lock:
+                    if len(self.heat_cool_count_list) > 10:
+                        self.heat_cool_count_list.pop(0)
+                    self.heat_cool_count_list.append(self.power_status)
+
                 if(self.is_running == 1):
                     ## log.write('%s,%s,%s\n' % ('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()), ('%.2f' % istTemp), sollTemp))
                     ##  log.flush()
-                    csvEntry = '%s,%s,%s\n' % ('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()), ('%.2f' % istTemp), sollTemp)
+                    csvEntry = '%s,%s,%s,%s\n' % ('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()), ('%.2f' % istTemp), sollTemp, self.getHeatCoolFrequency())
                     self.attachToCsvEntryList(csvEntry)
                     #self.writeCsv()
 
-                time.sleep(self.waitingTime)
+                time.sleep(self.getHysterese())
 
         except:
             print 'Good-bye'
