@@ -173,21 +173,35 @@ class HoldTemp(threading.Thread):
 
     def storeValue(self, value):
         #speicher nur neue Werte
-        if len(self.lastValues) == 0 or value != self.lastValues[-1]:
-            if len(self.lastValues) > 2:
-                self.lastValues.pop(0)
-            self.lastValues.append(value)
+        #if len(self.lastValues) == 0 or value != self.lastValues[-1]:
+        #   if len(self.lastValues) > 2:
+        #       self.lastValues.pop(0)
+        self.lastValues.append(value)
 
     def isSinking(self):
-        if len(self.lastValues) > 2:
-            if self.lastValues[2] < self.lastValues[1] and self.lastValues[1] < self.lastValues[0]:
+        count = 0
+        last_val = 1000.0
+        for val in self.lastValues:
+            if val <= last_val:
+                count += 1
+                last_val = val
+            elif count > 1 and self.lastValues[count-1] - self.lastValues[0] > 0.3:
+                self.lastValues = []
                 return True
+
         return False
 
     def isRising(self):
-        if len(self.lastValues) > 2:
-            if self.lastValues[2] > self.lastValues[1] and self.lastValues[1] > self.lastValues[0]:
+        count = 0
+        last_val = -1000.0
+        for val in self.lastValues:
+            if val >= last_val:
+                count += 1
+                last_val = val
+            elif count > 1 and self.lastValues[count-1] - self.lastValues[0] > 0.3:
+                self.lastValues = []
                 return True
+
         return False
 
     def startHeating(self):
