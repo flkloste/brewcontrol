@@ -52,7 +52,7 @@ class HoldTemp(threading.Thread):
         elif (in_mode == MODE.COOL):
             self.pilight_cmd_ON = 'off'
             self.pilight_cmd_OFF = 'on'
-            self.hysterese = 80
+            self.hysterese = 120
         else:
             raise ValueError("Error: No in_mode selected")
 
@@ -278,7 +278,7 @@ class HoldTemp(threading.Thread):
                         self.startHeating()
 
                 with self.heat_cool_count_lock:
-                    if len(self.heat_cool_count_list) >= 60:
+                    if len(self.heat_cool_count_list) >= 100:
                         self.heat_cool_count_list.pop(0)
                     self.heat_cool_count_list.append(self.power_status)
 
