@@ -179,28 +179,38 @@ class HoldTemp(threading.Thread):
         self.lastValues.append(value)
 
     def isSinking(self):
+        reversed_list = self.lastValues[::-1]
         count = 0
-        last_val = 1000.0
-        for val in self.lastValues:
-            if val <= last_val:
+        last_val = -1000.0
+        
+        for val in reversed_list:
+            if val >= last_val:
                 count += 1
                 last_val = val
-            elif count > 1 and self.lastValues[count-1] - self.lastValues[0] > 0.3:
-                self.lastValues = []
-                return True
+            else:
+                break
+
+        if count > 1 and reversed_list[count-1] - reversed_list[0] > 0.3:
+            self.lastValues = []
+            return True
 
         return False
 
     def isRising(self):
+        reversed_list = self.lastValues[::-1]
         count = 0
-        last_val = -1000.0
-        for val in self.lastValues:
-            if val >= last_val:
+        last_val = 1000.0
+
+        for val in reversed_list:
+            if val <= last_val:
                 count += 1
                 last_val = val
-            elif count > 1 and self.lastValues[0] - self.lastValues[count-1] > 0.3:
-                self.lastValues = []
-                return True
+            else:
+                break
+
+        if count > 1 and reversed_list[0] - reversed_list[count-1] > 0.3:
+            self.lastValues = []
+            return True
 
         return False
 
