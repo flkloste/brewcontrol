@@ -198,7 +198,7 @@ class HoldTemp(threading.Thread):
             if val >= last_val:
                 count += 1
                 last_val = val
-            elif count > 1 and self.lastValues[count-1] - self.lastValues[0] > 0.3:
+            elif count > 1 and self.lastValues[0] - self.lastValues[count-1] > 0.3:
                 self.lastValues = []
                 return True
 
