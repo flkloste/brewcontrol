@@ -302,7 +302,7 @@ class HoldTemp(threading.Thread):
                         self.startHeating()
 
                 with self.heat_cool_count_lock:
-                    if len(self.heat_cool_count_list) >= 100:
+                    if len(self.heat_cool_count_list) >= 60:
                         self.heat_cool_count_list.pop(0)
                     self.heat_cool_count_list.append(self.power_status)
 
